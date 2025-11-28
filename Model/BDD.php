@@ -1,8 +1,6 @@
 <?php
 
-
-include_once("Config.php"); // Chemin vers Config.php
-
+include_once("Config.php"); 
 
 abstract class BDD
 {
@@ -16,24 +14,26 @@ abstract class BDD
 
         try {
             $this->pdo = new PDO($dsn, $user, $password, [
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             ]);
         } catch (PDOException $e) {
             die("Erreur de connexion à la base de données : " . $e->getMessage());
         }
     }
 
-
     public function user(){
         return unserialize($_SESSION['user']);
     }
 
-    public function executeReq(string $query, $data = []){
+    public function executeReq(string $query, array $data = []): PDOStatement
+    {
         $stmt = $this->pdo->prepare($query);
 
         foreach($data as $cle => $valeur){
             $data[$cle] = htmlentities($valeur);
         }
+
         $stmt->execute($data);
 
         return $stmt;

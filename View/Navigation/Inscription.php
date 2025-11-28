@@ -1,37 +1,43 @@
-<h1>Inscription</h1>
-<form action="Index.php?page=Inscription" method="POST">
-    <label for="civilite">Civilité :</label>
-    <select name="civilite" id="civilite" required>
-        <option value="M.">M.</option>
-        <option value="Mme">Mme</option>
-    </select>
-    <br>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
 
-    <label for="prenom">Prénom :</label>
-    <input type="text" name="prenom" id="prenom" required>
-    <br>
+            <div class="card shadow">
+                <div class="card-body">
 
-    <label for="nom">Nom :</label>
-    <input type="text" name="nom" id="nom" required>
-    <br>
+                    <h3 class="text-center mb-4">Inscription</h3>
 
-    <label for="login">Login :</label>
-    <input type="text" name="login" id="login" required>
-    <br>
+                    <form action="Index.php?page=Inscription" method="POST">
 
-    <label for="email">Email :</label>
-    <input type="email" name="email" id="email" required>
-    <br>
+                        <div class="mb-3">
+                            <label for="pseudonyme" class="form-label">pseudonyme</label>
+                            <input type="text" class="form-control" name="pseudonyme" required>
+                        </div>
 
-    <label for="tel">Téléphone :</label>
-    <input type="text" name="tel" id="tel" required>
-    <br>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" required>
+                        </div>
 
-    <label for="mdp">Mot de passe :</label>
-    <input type="password" name="mdp" id="mdp" required>
-    <br>
+                        <div class="mb-3">
+                            <label for="mdp" class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control" name="mdp" required>
+                        </div>
 
-    <button type="submit">S'inscrire</button>
+                        <button type="submit" class="btn btn-primary w-100">
+                            S'inscrire
+                        </button>
 
-    <p>Déjà un compte ? <a href="Index.php?page=Connexion">Connectez-vous ici</a>.</p>
-</form>
+                        <p class="text-center mt-3">
+                            Déjà un compte ?
+                            <a href="Index.php?page=Connexion">Connexion</a>
+                        </p>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

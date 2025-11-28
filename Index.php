@@ -1,101 +1,58 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-ini_set("display_errors", 1);
 
 
-// Inclure le fichier des routes
-include_once("Controller/Route.php");
+require_once "Controller/Route.php";
 
-// Définition par défaut des composants de la page
-$header = "HeaderIndex";
-$model = "ModelMain";
-$controleur = "ControllerMain";
-$vue = "IndexMain";
-$js = "Main";
-$footer = "Footer";
+// Page demandée dans l'URL, ou page d'accueil par défaut
+$page = $_GET['page'] ?? 'IndexMain';
 
-// Vérification de la route demandée
-if (isset($_GET['page'])) {
-    $page = htmlspecialchars($_GET['page']); // Sécurisation du paramètre 'page'
-    if (isset($routes[$page]) && $routes[$page]['active'] === true) {
-        $header = $routes[$page]['header'];
-        $model = $routes[$page]['model'];
-        $controleur = $routes[$page]['controleur'];
-        $vue = $routes[$page]['vue'];
-        $footer = $routes[$page]['footer'];
-        $js = $routes[$page]['js'];
-    } else {
-        // Page non trouvée ou inactive
-        http_response_code(404);
-        echo "<h1>Erreur 404 : Page non trouvée</h1>";
-        exit();
+// Sécurité : si la route n'existe pas ou n'est pas active → on revient à IndexMain
+if (!isset($routes[$page]) || !$routes[$page]['active']) {
+    $page = 'IndexMain';
+}
+
+$route = $routes[$page];
+
+// 1) HEADER
+if (!empty($route['header'])) {
+    require_once "View/header/" . $route['header'] . ".php";
+}
+
+// 2) MODEL
+$model = null;
+if (!empty($route['model'])) {
+    require_once "Model/" . $route['model'] . ".php";
+    $modelClass = $route['model'];
+    $model = new $modelClass();   // ✅ on instancie, mais on NE L'AFFICHE PAS
+}
+
+// 3) CONTROLEUR
+$controller = null;
+if (!empty($route['controleur'])) {
+    require_once "Controller/" . $route['controleur'] . ".php";
+    $controllerClass = $route['controleur'];
+    $controller = new $controllerClass();  // ✅ pareil, pas de echo
+
+    // On essaie d'appeler une méthode du contrôleur correspondant au nom de la route
+    // Exemple : route 'Inscription' → méthode inscription() dans UserController
+    $action = strtolower($route['nom']);   // "Inscription" → "inscription"
+
+    if (method_exists($controller, $action)) {
+        // On peut lui passer le modèle si tu le veux, mais ce n'est pas obligatoire :
+        // $controller->$action($model);
+        $controller->$action();
     }
 }
-?>
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Location de voitures</title>
-
-    <!-- Inclusion du fichier Head -->
-    <?php
-    if (file_exists("Controller/Head.php")) {
-        include_once("Controller/Head.php");
-    } else {
-        echo "<!-- Fichier Head.php manquant -->";
-    }
-    ?>
-</head>
-<body>
-<!-- Inclusion de l'en-tête -->
-<?php
-if ($header != null && file_exists("View/Header/" . $header . ".php")) {
-    include_once("View/Header/" . $header . ".php");
-} else {
-    echo "<!-- Fichier d'en-tête manquant -->";
+// 4) VUE
+if (!empty($route['vue'])) {
+    require_once "View/" . $route['vue'] . ".php";
 }
-?>
 
-<!-- Inclusion du contrôleur -->
-<?php
-if ($controleur != null && file_exists("Controller/" . $controleur . ".php")) {
-    include_once("Controller/" . $controleur . ".php");
-} else {
-    echo "<!-- Contrôleur manquant -->";
+// 5) FOOTER
+if (!empty($route['footer'])) {
+    require_once "View/" . $route['footer'] . ".php";
 }
-?>
-
-<!-- Inclusion du modèle -->
-<?php
-if ($model != null && file_exists("Model/" . $model . ".php")) {
-    include_once("Model/" . $model . ".php");
-} else {
-    echo "<!-- Modèle manquant -->";
-}
-?>
-
-<!-- Contenu principal -->
-<?php
-if ($vue != null && file_exists("View/Navigation/" . $vue . ".php")) {
-    include_once("View/Navigation/" . $vue . ".php");
-} else {
-    echo "<!-- Fichier de vue manquant -->";
-}
-?>
-
-<!-- Inclusion du fichier JS -->
-<script src="View/assets/js/<?php echo htmlspecialchars($js); ?>.js"></script>
-</body>
-
-<!-- Inclusion du pied de page -->
-<?php
-if ($footer != null && file_exists("View/" . $footer . ".php")) {
-    include_once("View/" . $footer . ".php");
-} else {
-    echo "<!-- Fichier Footer manquant -->";
-}
-?>
-</html>

@@ -1,13 +1,9 @@
 <?php
-session_start();
 
-include_once("Model/ModelMain.php");
+class ControllerMain
+{
+    public function indexmain()
+    {
 
-$model = new ModelMain();
-$vehicles = $model->getVehicles();
-
-echo "<pre>";
-print_r($vehicles);
-echo "</pre>";
-
-?>
+    }
+}

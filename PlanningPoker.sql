@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost
--- Généré le : jeu. 27 nov. 2025 à 13:59
+-- Généré le : ven. 28 nov. 2025 à 14:49
 -- Version du serveur : 10.4.28-MariaDB
 -- Version de PHP : 8.2.4
 
@@ -30,7 +30,10 @@ SET time_zone = "+00:00";
 CREATE TABLE `partie` (
   `id` int(11) NOT NULL,
   `nom` int(11) NOT NULL,
-  `lien` int(11) NOT NULL
+  `lien` int(11) NOT NULL,
+  `nb_joueur` int(11) NOT NULL,
+  `mode` varchar(15) NOT NULL,
+  `minuteur` time NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -55,9 +58,15 @@ CREATE TABLE `user` (
   `id` int(11) NOT NULL,
   `email` varchar(180) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `pseudonyme` varchar(300) NOT NULL,
-  `created_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)'
+  `pseudonyme` varchar(300) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `user`
+--
+
+INSERT INTO `user` (`id`, `email`, `password`, `pseudonyme`) VALUES
+(2, 'clairmanon@hotmail.com', '$2y$10$v55UC5KahTC3lFP4dckmkuT4EM0DoZtmzmTdJXgS5nu8v.uuCRRVq', 'noun');
 
 --
 -- Index pour les tables déchargées
@@ -102,7 +111,7 @@ ALTER TABLE `tache`
 -- AUTO_INCREMENT pour la table `user`
 --
 ALTER TABLE `user`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -1,128 +1,52 @@
 <?php
 
-class Personne{
-    private $id_personne;
-    private $civilite;
-    private $prenom;
-    private $nom;
-    private $login;
-    private $email;
-    private $role;
-    private $date_inscription;
-    private $tel;
-    private $mdp;
+class Personne
+{
+    private ?int $id;
+    private string $pseudonyme;
+    private string $email;
+    private string $tel;
+    private string $mdp; // hashé
 
+    public function __construct(
+        ?int $id,
+        string $pseudonyme,
+        string $email,
+        string $mdp,
+        string $tel = '',
+        bool $mdpDejaHash = false
+    ) {
+        $this->id         = $id;
+        $this->pseudonyme = $pseudonyme;
+        $this->email      = $email;
+        $this->tel        = $tel;
 
-public function __construct($id_personne, $civilite, $prenom,$nom, $login, $email, $role, $date_inscription, $tel, $mdp){
-    $this->id_personne = $id_personne;
-    $this->civilite = $civilite;
-    $this->prenom = $prenom;
-    $this->nom = $nom;
-    $this->login = $login;
-    $this->email = $email;
-    $this->role = $role;
-    $this->date_inscription = $date_inscription;
-    $this->tel = $tel;
-    $this->mdp = $mdp;
-}
-    public function setIdPersonne( $idPersonne): void
-    {
-        if ($idPersonne <= 0) {
-            throw new InvalidArgumentException("L'ID doit être un entier positif.");
+        if ($mdpDejaHash) {
+            $this->mdp = $mdp;
+        } else {
+            $this->setMdp($mdp);
         }
-        $this->idPersonne = $idPersonne;
     }
 
-    public function setNom( $nom): void
-    {
-        $this->nom = $nom;
-    }
+    public function getId(): ?int          { return $this->id; }
+    public function getPseudonyme(): string{ return $this->pseudonyme; }
+    public function getEmail(): string     { return $this->email; }
 
-    public function setPrenom( $prenom): void
-    {
-        $this->prenom = $prenom;
-    }
+    public function setTel(string $tel): void { $this->tel = $tel; }
+    public function getTel(): string          { return $this->tel; }
 
-    public function setLogin($login): void
-    {
-        $this->login = $login;
-    }
-
-    public function setEmail($email): void
-    {
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException("L'email doit être valide.");
-        }
-        $this->email = $email;
-    }
-
-    public function setMdp($mdp): void
+    public function setMdp(string $mdp): void
     {
         if (strlen($mdp) < 4) {
-            throw new InvalidArgumentException("Le mot de passe doit comporter au moins 4 caractères.");
-        }
-        if (preg_match('/\s/', $mdp)) {
-            throw new InvalidArgumentException("Le mot de passe ne doit pas contenir d'espaces.");
+            throw new InvalidArgumentException("Mot de passe trop court");
         }
         $this->mdp = password_hash($mdp, PASSWORD_DEFAULT);
     }
 
+    public function getMdp(): string { return $this->mdp; }
 
-    public function setTel( $tel): void
+    public function verifyPassword(string $pwd): bool
     {
-        if (!preg_match("/^[0-9]{10}$/", $tel)) {
-            throw new InvalidArgumentException("Le numéro de téléphone doit comporter 10 chiffres.");
-        }
-        $this->tel = $tel;
-    }
-
-    public function getIdPersonne()
-    {
-        return $this->idPersonne;
-    }
-
-    public function getCivilite()
-    {
-        return $this->civilite;
-    }
-
-    public function getPrenom()
-    {
-        return $this->prenom;
-    }
-
-    public function getNom()
-    {
-        return $this->nom;
-    }
-
-    public function getLogin()
-    {
-        return $this->login;
-    }
-
-    public function getEmail()
-    {
-        return $this->email;
-    }
-
-    public function getRole()
-    {
-        return $this->role;
-    }
-
-    public function getDateInscription()
-    {
-        return $this->dateInscription;
-    }
-
-    public function getTel()
-    {
-        return $this->tel;
-    }
-
-    public function verifyPassword($password)
-    {
-        return password_verify($password, $this->mdp);
+        return password_verify($pwd, $this->mdp);
     }
 }

@@ -4,8 +4,8 @@
 <?php endif; ?>
 
 <form action="Index.php?page=Connexion" method="POST">
-    <label for="login">Login :</label>
-    <input type="text" name="login" id="login" required>
+    <label for="email">email :</label>
+    <input type="text" name="email" id="email" required>
     <br>
 
     <label for="mdp">Mot de passe :</label>
@@ -17,3 +17,4 @@
     <p>Pas encore de compte ? <a href="Index.php?page=Inscription">Inscrivez-vous ici</a>.</p>
 
 </form>
+
