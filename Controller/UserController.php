@@ -54,7 +54,9 @@ class UserController
                 // Connexion réussie
                 session_start();
                 $_SESSION['user_id'] = $user['id'];
-                header("Location: Index.php?page=IndexClient");
+                $_SESSION['pseudo']  = $user['pseudonyme']; 
+                $_SESSION['email']   = $user['email'];
+                header("Location: Index.php?page=Dashboard");
                 exit();
             } else {
                 // Échec de la connexion

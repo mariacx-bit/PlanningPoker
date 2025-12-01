@@ -1,12 +1,11 @@
 <?php
 $routes = array(
-    // Main
     'IndexMain' => array(
         'nom'        => 'IndexMain',
         'header'     => 'HeaderIndex',
-        'controleur' => 'ControllerMain',         // ⬅️ nom du fichier + classe
+        'controleur' => 'ControllerMain',        
         'model'      => 'ModelMain',
-        'vue'        => 'Navigation/IndexMain',   // ⬅️ dossier Navigation
+        'vue'        => 'Navigation/IndexMain', 
         'js'         => 'Main',
         'footer'     => null,
         'visible'    => true,
@@ -18,7 +17,7 @@ $routes = array(
         'header'     => 'HeaderIndex',
         'controleur' => 'UserController',
         'model'      => 'UserModel',
-        'vue'        => 'Navigation/Inscription', // ⬅️ dans View/Navigation
+        'vue'        => 'Navigation/Inscription', 
         'js'         => 'Main',
         'footer'     => null,
         'visible'    => true,
@@ -49,15 +48,28 @@ $routes = array(
         'active'     => true
     ],
 
-    'IndexClient' => [
-        'nom'        => 'IndexClient',
+    'Partie' => [
+        'nom'        => 'Partie',
         'header'     => 'HeaderIndex',
-        'controleur' => 'UserController',
-        'model'      => 'UserModel',
-        'vue'        => 'Navigation/IndexClient',
+        'controleur' => 'PartieController',
+        'model'      => 'PartieModel',
+        'vue'        => 'Navigation/Partie',  
         'js'         => 'Main',
+        'footer'     => 'Footer',
+        'visible'    => true,
+        'active'     => true
+    ],
+
+    'Dashboard' => [
+        'nom'        => 'Dashboard',
+        'header'     => 'HeaderUser',
+        'controleur' => 'DashboardController',
+        'model'      => 'PartieModel',
+        'vue'        => 'Navigation/Dashboard',
+        'js'         => null,
         'footer'     => null,
         'visible'    => true,
         'active'     => true
     ],
+
 );
