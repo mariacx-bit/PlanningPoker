@@ -8,3 +8,97 @@
 main{
   margin: 20px;
 }
+
+body {
+        background: #f5f5ff !important;
+    }
+
+    .pp-card {
+        border-radius: 18px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(32, 32, 72, 0.07);
+        background: #ffffff;
+    }
+
+    .pp-column-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        color: #7b7fb0;
+    }
+
+    .pp-player-pill {
+        border-radius: 999px;
+        padding: 0.4rem 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.85rem;
+    }
+
+    .pp-player-pill span.badge {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+    }
+
+    .pp-center-header {
+        border-radius: 18px;
+        background: linear-gradient(135deg, #f0ecff, #fdfbff);
+        border: none;
+    }
+
+    .pp-mode-tag {
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        background: #ffffffaa;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .pp-vote-card {
+        border-radius: 14px;
+        min-width: 3rem;
+        min-height: 4.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.05rem;
+        background: #ffffff;
+        border: 2px solid #e1ddff;
+        transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    }
+
+    .pp-vote-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(80, 70, 190, 0.15);
+        border-color: #7b5cff;
+    }
+
+    .pp-vote-card.pp-selected {
+        border-color: #7b5cff;
+        box-shadow: 0 6px 16px rgba(80, 70, 190, 0.2);
+        background: #f1eeff;
+    }
+
+    .pp-card-coffee {
+        font-size: 1.3rem;
+    }
+
+    .pp-btn-reveal {
+        border-radius: 999px;
+        padding-inline: 1.6rem;
+        font-weight: 500;
+        background: #ff4b6a;
+        border-color: #ff4b6a;
+    }
+
+    .pp-btn-reveal:hover {
+        background: #e63f5c;
+        border-color: #e63f5c;
+    }
+
+    #journal {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }

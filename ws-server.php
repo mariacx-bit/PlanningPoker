@@ -10,7 +10,11 @@ use Ratchet\WebSocket\WsServer;
 
 class PokerServer implements MessageComponentInterface
 {
-    protected $clients = []; // [codePartie => SplObjectStorage]
+    /**
+     * @var array<string,\SplObjectStorage>
+     *  [codePartie => SplObjectStorage de connexions]
+     */
+    protected $clients = [];
 
     public function __construct()
     {
@@ -19,84 +23,119 @@ class PokerServer implements MessageComponentInterface
 
     public function onOpen(ConnectionInterface $conn)
     {
-        // Récupérer code & pseudo : ws://localhost:8080?code=XXX&pseudo=Y
+        // Récupérer code & pseudo : ws://host:8080?code=XXX&pseudo=Y
         parse_str($conn->httpRequest->getUri()->getQuery(), $query);
 
         $code   = $query['code']   ?? null;
         $pseudo = $query['pseudo'] ?? 'Anonyme';
 
         if (!$code) {
+            echo "Connexion refusée : pas de code de partie.\n";
             $conn->close();
             return;
         }
 
-        $conn->code   = $code;
-        $conn->pseudo = $pseudo;
-
         if (!isset($this->clients[$code])) {
             $this->clients[$code] = new \SplObjectStorage();
         }
+
+        // On stocke quelques infos sur la connexion
+        $conn->code   = $code;
+        $conn->pseudo = $pseudo;
+
         $this->clients[$code]->attach($conn);
 
+        echo "Nouvelle connexion : {$pseudo} sur partie {$code}\n";
+
+        // Annonce aux autres joueurs
         $this->broadcast($code, [
             'type'   => 'join',
             'pseudo' => $pseudo
-        ]);
-
-        echo "Nouvelle connexion sur la partie $code ($pseudo)\n";
+        ], $conn);
     }
 
     public function onMessage(ConnectionInterface $from, $msg)
     {
-        $data = json_decode($msg, true);
-        $code = $from->code ?? null;
+        $code   = $from->code   ?? null;
+        $pseudo = $from->pseudo ?? 'Anonyme';
 
         if (!$code || !isset($this->clients[$code])) {
             return;
         }
 
-        switch ($data['type'] ?? null) {
+        $data = json_decode($msg, true);
+        if (!is_array($data) || !isset($data['type'])) {
+            return;
+        }
+
+        switch ($data['type']) {
             case 'vote':
+                // Relayer aux autres joueurs de la même partie
                 $this->broadcast($code, [
                     'type'   => 'vote',
-                    'pseudo' => $from->pseudo,
+                    'pseudo' => $pseudo,
                     'valeur' => $data['valeur'] ?? null
-                ]);
+                ], $from);
                 break;
 
             case 'reveal':
+                // Notification simple
                 $this->broadcast($code, [
                     'type' => 'reveal'
-                ]);
+                ], $from);
                 break;
         }
     }
 
     public function onClose(ConnectionInterface $conn)
     {
-        $code = $conn->code ?? null;
+        $code   = $conn->code   ?? null;
+        $pseudo = $conn->pseudo ?? 'Anonyme';
+
         if ($code && isset($this->clients[$code])) {
             $this->clients[$code]->detach($conn);
+
+            echo "Connexion fermée : {$pseudo} sur partie {$code}\n";
+
+            // Informer les autres joueurs
             $this->broadcast($code, [
                 'type'   => 'leave',
-                'pseudo' => $conn->pseudo
+                'pseudo' => $pseudo
             ]);
-            echo "Déconnexion de {$conn->pseudo} sur la partie $code\n";
+
+            // Si plus personne dans cette partie, on nettoie
+            if (count($this->clients[$code]) === 0) {
+                unset($this->clients[$code]);
+            }
         }
     }
 
     public function onError(ConnectionInterface $conn, \Exception $e)
     {
-        echo "Erreur: {$e->getMessage()}\n";
+        echo "Erreur WebSocket : {$e->getMessage()}\n";
         $conn->close();
     }
 
-    protected function broadcast(string $code, array $data): void
+    /**
+     * Envoie un message JSON à tous les clients d'une partie.
+     *
+     * @param string                   $code
+     * @param array                    $msg
+     * @param ConnectionInterface|null $except ne pas envoyer à cette connexion
+     */
+    protected function broadcast(string $code, array $msg, ConnectionInterface $except = null): void
     {
-        if (!isset($this->clients[$code])) return;
+        if (!isset($this->clients[$code])) {
+            return;
+        }
+
+        $json = json_encode($msg);
 
         foreach ($this->clients[$code] as $client) {
-            $client->send(json_encode($data));
+            if ($except && $client === $except) {
+                continue;
+            }
+            $client->send($json);
         }
     }
 }

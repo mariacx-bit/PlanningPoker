@@ -14,20 +14,25 @@ if (!isset($routes[$page]) || !$routes[$page]['active']) {
 }
 
 $route = $routes[$page];
+
+/**
+ * ➊ INTERCEPTION DES APPELS AJAX JSON
+ *    (avant d'envoyer le moindre HTML)
+ */
+$actionParam = $_GET['action'] ?? null;
+
+if ($page === 'Partie' && in_array($actionParam, ['resolve', 'export'], true)) {
+    require_once "Controller/PartieController.php";
+    $controller = new PartieController();
+    // la méthode partie() s'occupe déjà de router vers resolve/export
+    $controller->partie();
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Planning Poker</title>
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- TON CSS GLOBAL -->
-    <link rel="stylesheet" href="View/assets/css/style.css">
+<?php require_once "Controller/Head.php"; ?>
 
 </head>
 <body>
@@ -44,50 +49,31 @@ if (!empty($route['header'])) {
 
 }
 ?>
-
-<main class="container-fluid">
-
+<main class="py-4">
 <?php
-// 2) MODEL
-$model = null;
-if (!empty($route['model'])) {
-    require_once "Model/" . $route['model'] . ".php";
-    $modelClass = $route['model'];      // ➜ on récupère le nom de classe
-    $model = new $modelClass();         // ➜ puis on instancie
-}
-
-// 3) CONTROLEUR
+// ROUTAGE NORMAL (HTML)
 $controller = null;
 if (!empty($route['controleur'])) {
     require_once "Controller/" . $route['controleur'] . ".php";
-    $controllerClass = $route['controleur'];   // ➜ idem pour le contrôleur
+    $controllerClass = $route['controleur'];
     $controller = new $controllerClass();
+}
 
-    $action = strtolower($route['nom']);
+$action = strtolower($route['nom']);
 
-    if (method_exists($controller, $action)) {
-        $controller->$action();
+if ($controller && method_exists($controller, $action)) {
+    $controller->$action();
+} else {
+    if (!empty($route['vue'])) {
+        require "View/" . $route['vue'] . ".php";
+    } else {
+        echo "<div class='container mt-5'><div class='alert alert-danger'>Vue non définie.</div></div>";
     }
 }
-
-
-// 4) VUE
-if (!empty($route['vue'])) {
-    require_once "View/" . $route['vue'] . ".php";
-}
 ?>
-
 </main>
-
-<?php
-// 5) FOOTER
-if (!empty($route['footer'])) {
-    require_once "View/" . $route['footer'] . ".php";
-}
-?>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>

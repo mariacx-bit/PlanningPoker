@@ -1,18 +1,11 @@
-<head>
-    <title></title>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="" name="description">
 
-    <style type="text/css">
-        @import url('View/assets/css/style.css');
-    </style>
+    <title>Planning Poker</title>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Poppins:300,300i,400,400i,600,600i,700,700i|Satisfy|Comic+Neue:300,300i,400,400i,700,700i" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Favicons -->
-    <link href="View/assets/img/favicon.ico" rel="icon">
-
-
-</head>
+    <!-- TON CSS GLOBAL -->
+    <link rel="stylesheet" href="View/assets/css/style.css?v=<?php echo time(); ?>">
