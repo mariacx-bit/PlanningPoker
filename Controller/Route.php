@@ -72,4 +72,15 @@ $routes = array(
         'active'     => true
     ],
 
+    'Profil' => [
+        'nom'        => 'Profil',
+        'header'     => 'HeaderUser',
+        'controleur' => 'UserController',
+        'model'      => 'PartieModel',
+        'vue'        => 'Navigation/Profil',
+        'js'         => 'Main',
+        'footer'     => null,
+        'visible'    => true,
+        'active'     => true
+    ],
 );

@@ -15,7 +15,7 @@ class PartieModel extends ModelMain
      *  - mode (VARCHAR)
      *  - minuteur (TIME ou VARCHAR)
      *  - id_createur (INT)
-     *  - pseudo_createur (VARCHAR)
+     *  - createur (VARCHAR)
      *  - created_at (DATETIME)
      */
     public function creerPartie(
@@ -25,12 +25,12 @@ class PartieModel extends ModelMain
         string $mode,
         string $minuteur,
         int $idCreateur,
-        string $pseudoCreateur
+        string $createur
     ): int {
         $sql = "INSERT INTO partie 
-                (nom, lien, nb_joueur, mode, minuteur, id_createur, pseudo_createur, created_at)
+                (nom, lien, nb_joueur, mode, minuteur, id_createur, createur, created_at)
                 VALUES 
-                (:nom, :lien, :nb_joueur, :mode, :minuteur, :id_createur, :pseudo_createur, NOW())";
+                (:nom, :lien, :nb_joueur, :mode, :minuteur, :id_createur, :createur, NOW())";
 
         $this->executeReq($sql, [
             'nom'            => $nom,
@@ -39,7 +39,7 @@ class PartieModel extends ModelMain
             'mode'           => $mode,
             'minuteur'       => $minuteur,
             'id_createur'    => $idCreateur,
-            'pseudo_createur'=> $pseudoCreateur
+            'createur'=> $createur
         ]);
 
         return (int)$this->pdo->lastInsertId();
