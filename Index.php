@@ -21,13 +21,14 @@ $route = $routes[$page];
  */
 $actionParam = $_GET['action'] ?? null;
 
-if ($page === 'Partie' && in_array($actionParam, ['resolve', 'export'], true)) {
+if ($page === 'Partie' && in_array($actionParam, ['resolve', 'export', 'saveBacklog', 'setCurrent'], true)) {
     require_once "Controller/PartieController.php";
     $controller = new PartieController();
-    // la méthode partie() s'occupe déjà de router vers resolve/export
     $controller->partie();
     exit;
 }
+
+
 ?>
 <!DOCTYPE html>
 <html lang="fr">

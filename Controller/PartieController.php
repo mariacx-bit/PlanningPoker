@@ -1,314 +1,205 @@
 <?php
-
 require_once "Model/PartieModel.php";
 require_once "Entities/GameRules.php";
-require_once "Entities/GameState.php";
 
 class PartieController
 {
-    private PartieModel $partieModel;
+    private PartieModel $model;
 
     public function __construct()
     {
-        $this->partieModel = new PartieModel();
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $this->model = new PartieModel();
     }
 
     public function partie()
     {
-        // 1) AJAX : résolution d'un tour (votes -> décision)
-        if (isset($_GET['action']) && $_GET['action'] === 'resolve' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-            $this->resolveRoundAjax();
-            return;
+        $action = $_GET['action'] ?? null;
+
+        if ($action === 'saveBacklog' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->saveBacklogAjax(); return;
+        }
+        if ($action === 'resolve' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->resolveAjax(); return;
+        }
+        if ($action === 'export') {
+            $this->exportJson(); return;
         }
 
-        // 2) Export JSON de l'état de la partie
-        if (isset($_GET['action']) && $_GET['action'] === 'export') {
-            $this->exportJson();
-            return;
-        }
-
-        // 3) Ajout d'une tâche par l'animateur (formulaire colonne de droite)
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'addTask') {
-            $this->ajouterTacheDepuisForm();
-            return;
-        }
-
+        // page
         $code = $_GET['code'] ?? null;
+        if (!$code) { echo "Code manquant"; return; }
 
-        // 4) Création de partie (host)
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST['join']) && !$code) {
-            $this->creerPartieDepuisForm();
-            return;
-        }
+        $partie = $this->model->getPartieByCode($code);
+        if (!$partie) { echo "Partie introuvable"; return; }
 
-        // 5) Rejoindre une partie (choix pseudo)
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['join']) && $code) {
-            $this->rejoindrePartieDepuisForm($code);
-            return;
-        }
+        // pseudo session (simple)
+        $pseudo = $_SESSION['pseudo'] ?? 'Anonyme';
 
-        // 6) Si on arrive ici avec un code, charger la partie en session
-        if ($code) {
-            $this->chargerPartieEnSession($code);
-        }
+        // animateur = créateur DB
+        $isAnimateur = isset($_SESSION['user_id']) ? $this->model->isAnimateur($code, (int)$_SESSION['user_id']) : false;
 
-        // La vue Partie.php gère l'affichage (création / rejoindre / jeu)
-        require "View/Navigation/Partie.php";
+        // backlog + progression
+        $tasks = $this->model->getBacklog($code);
+        $currentIndex = (int)($partie['tache_index'] ?? 0);
+        $tour = (int)($partie['tour'] ?? 1);
+        $mode = $partie['mode'] ?? 'strict';
+
+        $tacheCourante = $tasks[$currentIndex] ?? null;
+
+        // variables pour la vue
+        $codePartie = $code;
+
+        require __DIR__ . "/../View/Navigation/Partie.php";
     }
 
-
-    private function creerPartieDepuisForm(): void
-    {
-        if (!isset($_SESSION['user_id'])) {
-            header("Location: Index.php?page=Connexion");
-            exit;
-        }
-
-        $nom        = trim($_POST['nom'] ?? '');
-        $nbJoueur   = (int)($_POST['nb_joueur'] ?? 0);
-        $modeJeu    = $_POST['mode'] ?? 'strict'; // 'strict' ou 'moyenne'
-        $minuteur   = $_POST['minuteur'] ?? '00:02:00';
-        $backlogJson = $_POST['backlog_json'] ?? '[]';
-
-        if ($nom === '' || $nbJoueur < 2) {
-            $_SESSION['create_error'] = "Merci de renseigner un nom et un nombre de joueurs valide.";
-            require "View/Navigation/Partie.php";
-            return;
-        }
-
-        // Code de partie
-        $code = strtoupper(substr(md5(uniqid('', true)), 0, 6));
-
-        $idCreateur     = (int)$_SESSION['user_id'];
-        $pseudoCreateur = $_SESSION['pseudo'] ?? 'Animateur';
-
-        // Enregistrement en BDD
-        $idPartie = $this->partieModel->creerPartie(
-            $nom,
-            $code,
-            $nbJoueur,
-            $modeJeu,
-            $minuteur,
-            $idCreateur,
-            $pseudoCreateur
-        );
-
-        // Backlog → état de partie
-        $tasks = json_decode($backlogJson, true);
-        if (!is_array($tasks)) {
-            $_SESSION['create_error'] = "Backlog JSON invalide, la partie est créée mais sans tâches.";
-            $tasks = [];
-        }
-
-        $players = [$pseudoCreateur];
-        $state   = GameState::createFromBacklog($tasks, $players, $modeJeu);
-
-        if (!isset($_SESSION['game'])) {
-            $_SESSION['game'] = [];
-        }
-        $_SESSION['game'][$code] = $state;
-
-        // Infos en session
-        $_SESSION['partie_id']   = $idPartie;
-        $_SESSION['partie_code'] = $code;
-        $_SESSION['partie_nom']  = $nom;
-        $_SESSION['est_maitre'][$code] = true;
-
-        header("Location: Index.php?page=Partie&code=" . urlencode($code));
-        exit;
-    }
-
-    private function rejoindrePartieDepuisForm(string $code): void
-    {
-        $pseudo = trim($_POST['pseudo'] ?? '');
-        if ($pseudo === '') {
-            $_SESSION['join_error'] = "Merci de choisir un pseudonyme.";
-            header("Location: Index.php?page=Partie&code=" . urlencode($code));
-            exit;
-        }
-
-        $_SESSION['pseudo'] = $pseudo;
-
-        header("Location: Index.php?page=Partie&code=" . urlencode($code) . "&pseudo=" . urlencode($pseudo));
-        exit;
-    }
-
-    private function ajouterTacheDepuisForm(): void
-    {
-        $code = $_GET['code'] ?? ($_SESSION['partie_code'] ?? null);
-
-        if (!$code || !isset($_SESSION['game'][$code])) {
-            $_SESSION['task_error'] = "Partie introuvable. Impossible d'ajouter une tâche.";
-            header("Location: Index.php?page=Partie");
-            exit;
-        }
-
-        $titre = trim($_POST['task_title'] ?? '');
-        $desc  = trim($_POST['task_description'] ?? '');
-
-        if ($titre === '') {
-            $_SESSION['task_error'] = "Le titre de la tâche est obligatoire.";
-            header("Location: Index.php?page=Partie&code=" . urlencode($code));
-            exit;
-        }
-
-        $state = $_SESSION['game'][$code];
-
-        if (!isset($state['tasks']) || !is_array($state['tasks'])) {
-            $state['tasks'] = [];
-        }
-
-        // Trouver un nouvel ID (max + 1)
-        $maxId = 0;
-        foreach ($state['tasks'] as $t) {
-            if (isset($t['id']) && $t['id'] > $maxId) {
-                $maxId = $t['id'];
-            }
-        }
-        $newId = $maxId + 1;
-
-        $state['tasks'][] = [
-            'id'          => $newId,
-            'title'       => $titre,
-            'description' => $desc,
-            'estimate'    => null,
-            'status'      => 'pending'
-        ];
-
-        $_SESSION['game'][$code] = $state;
-
-        header("Location: Index.php?page=Partie&code=" . urlencode($code));
-        exit;
-    }
-
-    private function chargerPartieEnSession(string $code): void
-    {
-        $partie = $this->partieModel->getPartieByCode($code);
-
-        if (!$partie) {
-            http_response_code(404);
-            echo "<div class='container mt-5'>
-                    <div class='alert alert-danger text-center'>
-                        Partie introuvable pour le code <strong>" . htmlspecialchars($code) . "</strong>.
-                    </div>
-                  </div>";
-            exit;
-        }
-
-        $_SESSION['partie_id']   = $partie['id'];
-        $_SESSION['partie_code'] = $partie['lien'];
-        $_SESSION['partie_nom']  = $partie['nom'];
-
-        if (!isset($_SESSION['game'][$code])) {
-            $state = GameState::createFromBacklog([], [], $partie['mode']);
-            $_SESSION['game'][$code] = $state;
-        }
-    }
-
-    private function resolveRoundAjax(): void
+    private function saveBacklogAjax(): void
     {
         header('Content-Type: application/json; charset=utf-8');
 
-        $code = $_GET['code'] ?? ($_SESSION['partie_code'] ?? null);
-        if (!$code || !isset($_SESSION['game'][$code])) {
-            echo json_encode(['ok' => false, 'error' => 'Partie introuvable côté serveur.']);
-            return;
+        $code = $_GET['code'] ?? null;
+        if (!$code) { echo json_encode(['ok'=>false,'message'=>'Code manquant']); return; }
+
+        if (!isset($_SESSION['user_id']) || !$this->model->isAnimateur($code, (int)$_SESSION['user_id'])) {
+            echo json_encode(['ok'=>false,'message'=>"Seul l'animateur peut modifier le backlog"]); return;
         }
 
-        $raw     = file_get_contents('php://input');
-        $payload = json_decode($raw, true);
+        $payload = json_decode(file_get_contents('php://input'), true);
+        $backlog = $payload['backlog'] ?? null;
 
-        if (!is_array($payload) || empty($payload['votes']) || !is_array($payload['votes'])) {
-            echo json_encode(['ok' => false, 'error' => 'Votes manquants ou invalides.']);
-            return;
+        if (!is_array($backlog)) { echo json_encode(['ok'=>false,'message'=>'JSON invalide']); return; }
+
+        // normaliser des clés (title/description)
+        $norm = [];
+        $id = 1;
+        foreach ($backlog as $t) {
+            if (!is_array($t)) continue;
+            $title = trim((string)($t['title'] ?? $t['titre'] ?? ''));
+            if ($title === '') continue;
+            $norm[] = [
+                'id' => (int)($t['id'] ?? $id++),
+                'title' => $title,
+                'description' => (string)($t['description'] ?? $t['desc'] ?? ''),
+            ];
         }
 
-        $state = $_SESSION['game'][$code];
-        $mode  = $state['mode'] ?? 'strict';
+        $this->model->updateBacklog($code, $norm);
+        $this->model->saveResultats($code, []); // reset résultats
 
-        $currentIndex = $state['current_index'] ?? 0;
-        if (empty($state['tasks']) || !isset($state['tasks'][$currentIndex])) {
-            echo json_encode([
-                'ok'    => false,
-                'error' => 'Aucune tâche en cours. Ajoute au moins une tâche dans le backlog avant de révéler les votes.'
-            ]);
-            return;
+        echo json_encode(['ok'=>true,'message'=>'Backlog enregistré ✅']);
+    }
+
+    private function resolveAjax(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $code = $_GET['code'] ?? null;
+        if (!$code) { echo json_encode(['ok'=>false,'message'=>'Code manquant']); return; }
+
+        if (!isset($_SESSION['user_id']) || !$this->model->isAnimateur($code, (int)$_SESSION['user_id'])) {
+            echo json_encode(['ok'=>false,'message'=>"Seul l'animateur peut valider"]); return;
         }
 
+        $partie = $this->model->getPartieByCode($code);
+        if (!$partie) { echo json_encode(['ok'=>false,'message'=>'Partie introuvable']); return; }
+
+        $tasks = $this->model->getBacklog($code);
+        $i = (int)($partie['tache_index'] ?? 0);
+        $tour = (int)($partie['tour'] ?? 1);
+        $mode = $partie['mode'] ?? 'strict';
+
+        if (!isset($tasks[$i])) {
+            echo json_encode(['ok'=>false,'message'=>'Aucune tâche en cours']); return;
+        }
+
+        $payload = json_decode(file_get_contents('php://input'), true);
+        $votesIn = $payload['votes'] ?? null;
+
+        // mapping pseudo->valeur
         $values = [];
-        foreach ($payload['votes'] as $vote) {
-            if (!isset($vote['valeur'])) continue;
-            $values[] = $vote['valeur'];
+        if (is_array($votesIn)) {
+            $isAssoc = array_keys($votesIn) !== range(0, count($votesIn) - 1);
+            if ($isAssoc) {
+                foreach ($votesIn as $p => $v) $values[] = $v;
+            } else {
+                foreach ($votesIn as $row) if (is_array($row) && isset($row['valeur'])) $values[] = $row['valeur'];
+            }
         }
 
-        $round = ($state['tasks'][$currentIndex]['round'] ?? 0) + 1;
+        if (!$values) { echo json_encode(['ok'=>false,'message'=>'Votes manquants']); return; }
 
-        $result = GameRules::decide($mode, $values, $round);
+        $result = GameRules::decide($mode, $values, $tour);
 
-        if ($result['type'] === 'pause') {
-            $state['tasks'][$currentIndex]['round'] = $round;
-            $_SESSION['game'][$code] = $state;
-
+        // pause café
+        if (($result['type'] ?? '') === 'pause') {
+            $this->model->updateProgress($code, $i, $tour + 1, 'pause');
             echo json_encode([
-                'ok'        => true,
-                'status'    => 'pause',
-                'message'   => 'Tous les joueurs ont choisi la carte café.',
-                'exportUrl' => 'Index.php?page=Partie&code=' . urlencode($code) . '&action=export'
+                'ok'=>true,'status'=>'pause',
+                'message'=>'☕ Pause café (tout le monde a voté café)',
+                'exportUrl'=>"Index.php?page=Partie&action=export&code=" . urlencode($code)
             ]);
             return;
         }
 
-        if ($result['type'] === 'validated') {
-            $state['tasks'][$currentIndex]['round']    = $round;
-            $state['tasks'][$currentIndex]['estimate'] = $result['estimate'];
-            $state['tasks'][$currentIndex]['status']   = 'validated';
+        // validée
+        if (($result['type'] ?? '') === 'validated') {
+            $estimate = $result['estimate'] ?? null;
 
-            $state['current_index'] = $currentIndex + 1;
+            $resultats = $this->model->getResultats($code);
+            $resultats[] = [
+                'task' => $tasks[$i],
+                'estimate' => $estimate,
+                'round' => $tour,
+                'mode' => $mode
+            ];
+            $this->model->saveResultats($code, $resultats);
 
-            $_SESSION['game'][$code] = $state;
-
-            $finished = $state['current_index'] >= count($state['tasks']);
+            $newIndex = $i + 1;
+            $finished = $newIndex >= count($tasks);
+            $this->model->updateProgress($code, $newIndex, 1, $finished ? 'done' : 'running');
 
             echo json_encode([
-                'ok'        => true,
-                'status'    => 'validated',
-                'estimate'  => $result['estimate'],
-                'reason'    => $result['reason'],
-                'task'      => $state['tasks'][$currentIndex],
-                'finished'  => $finished,
-                'exportUrl' => $finished
-                    ? 'Index.php?page=Partie&code=' . urlencode($code) . '&action=export'
-                    : null
+                'ok'=>true,'status'=>'validated',
+                'message'=>"✅ Tâche validée : $estimate",
+                'finished'=>$finished,
+                'exportUrl'=>$finished ? "Index.php?page=Partie&action=export&code=" . urlencode($code) : null
             ]);
             return;
         }
 
-        // sinon : on continue
-        $state['tasks'][$currentIndex]['round'] = $round;
-        $_SESSION['game'][$code] = $state;
+        // pas validée => tour suivant
+        $this->model->updateProgress($code, $i, $tour + 1, 'running');
 
         echo json_encode([
-            'ok'     => true,
-            'status' => 'continue',
-            'reason' => $result['reason'],
-            'round'  => $round
+            'ok'=>true,'status'=>'continue',
+            'message'=>'Pas d’accord → nouveau tour (discussion)',
+            'round'=>$tour + 1
         ]);
     }
 
     private function exportJson(): void
     {
-        $code = $_GET['code'] ?? ($_SESSION['partie_code'] ?? null);
-        if (!$code || !isset($_SESSION['game'][$code])) {
-            http_response_code(404);
-            echo "Partie introuvable.";
-            return;
-        }
+        $code = $_GET['code'] ?? null;
+        if (!$code) { http_response_code(400); echo "Code manquant"; return; }
 
-        $state = $_SESSION['game'][$code];
-        $json  = GameState::toJson($state);
+        $partie = $this->model->getPartieByCode($code);
+        if (!$partie) { http_response_code(404); echo "Partie introuvable"; return; }
+
+        $tasks = $this->model->getBacklog($code);
+        $resultats = $this->model->getResultats($code);
+
+        $payload = [
+            'code' => $code,
+            'mode' => $partie['mode'],
+            'etat' => $partie['etat'],
+            'tache_index' => (int)$partie['tache_index'],
+            'tour' => (int)$partie['tour'],
+            'backlog' => $tasks,
+            'resultats' => $resultats,
+        ];
 
         header('Content-Type: application/json; charset=utf-8');
-        header('Content-Disposition: attachment; filename=\"planning_poker_' . $code . '.json\"');
-        echo $json;
+        header('Content-Disposition: attachment; filename="planning_poker_' . $code . '.json"');
+        echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
 }

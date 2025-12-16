@@ -15,11 +15,19 @@ class PokerServer implements MessageComponentInterface
 
     public function __construct()
     {
-        echo "WebSocket Planning Poker démarré sur 0.0.0.0:8080...\n";
+        echo "WebSocket Planning Poker démarré sur 0.0.0.0:8080 (path /ws)...\n";
     }
 
     public function onOpen(ConnectionInterface $conn)
     {
+        // ✅ en prod on passe par /ws (via reverse proxy)
+        $path = $conn->httpRequest->getUri()->getPath();
+        if ($path !== '/ws' && $path !== '/') {
+            $conn->close();
+            return;
+        }
+
+
         parse_str($conn->httpRequest->getUri()->getQuery(), $query);
 
         $code   = $query['code']   ?? null;
@@ -31,9 +39,7 @@ class PokerServer implements MessageComponentInterface
             return;
         }
 
-        if ($pseudo === '') {
-            $pseudo = 'Anonyme';
-        }
+        if ($pseudo === '') $pseudo = 'Anonyme';
 
         if (!isset($this->clients[$code])) {
             $this->clients[$code] = new \SplObjectStorage();
@@ -46,20 +52,20 @@ class PokerServer implements MessageComponentInterface
 
         echo "Nouvelle connexion : {$pseudo} sur partie {$code}\n";
 
-        // 1) Envoyer AU NOUVEAU l'état actuel (liste joueurs)
+        // 1) Envoyer AU NOUVEAU l'état actuel
         $conn->send(json_encode([
             'type'    => 'state',
             'code'    => $code,
             'players' => $this->getPlayers($code),
-        ]));
+        ], JSON_UNESCAPED_UNICODE));
 
-        // 2) Informer les autres joueurs
+        // 2) Informer les autres
         $this->broadcast($code, [
             'type'   => 'join',
             'pseudo' => $pseudo,
         ], $conn);
 
-        // 3) Optionnel : pousser la liste complète à tous (plus robuste)
+        // 3) Pousser la liste complète à tous (robuste)
         $this->broadcast($code, [
             'type'    => 'players',
             'players' => $this->getPlayers($code),
@@ -71,7 +77,11 @@ class PokerServer implements MessageComponentInterface
         $code   = $from->code   ?? null;
         $pseudo = $from->pseudo ?? 'Anonyme';
 
-        if (!$code || !isset($this->clients[$code])) {
+        if (!$code || !isset($this->clients[$code])) return;
+
+        // ✅ sécurité simple : éviter messages énormes
+        if (strlen($msg) > 4096) {
+            $from->send(json_encode(['type' => 'error', 'message' => 'Message trop long']));
             return;
         }
 
@@ -81,55 +91,66 @@ class PokerServer implements MessageComponentInterface
             return;
         }
 
-        switch ($data['type']) {
-            case 'vote':
-                $this->broadcast($code, [
-                    'type'   => 'vote',
-                    'pseudo' => $pseudo,
-                    'valeur' => $data['valeur'] ?? null,
-                ], $from);
-                break;
+    switch ($data['type']) {
 
-            case 'reveal':
-                $this->broadcast($code, ['type' => 'reveal'], $from);
-                break;
+        case 'vote':
+            // envoyer à tout le monde (y compris l'émetteur)
+            $this->broadcast($code, [
+                'type'   => 'vote',
+                'pseudo' => $pseudo,
+                'valeur' => $data['valeur'] ?? null,
+            ]);
+            break;
 
-            case 'ping':
-                $from->send(json_encode(['type' => 'pong']));
-                break;
+        case 'reveal':
+            // envoyer à tout le monde
+            $this->broadcast($code, ['type' => 'reveal']);
+            break;
 
-            default:
-                $from->send(json_encode(['type' => 'error', 'message' => 'Type inconnu']));
-                break;
-        }
+        // ✅ NOUVEAU : demande à tout le monde de recharger (nouvelle tâche / tour / backlog)
+        case 'refresh':
+            $this->broadcast($code, ['type' => 'refresh']);
+            break;
+
+        // ✅ NOUVEAU : reset des votes pour tout le monde (nouveau tour)
+        case 'round_reset':
+            $this->broadcast($code, ['type' => 'round_reset']);
+            break;
+
+        case 'ping':
+            $from->send(json_encode(['type' => 'pong']));
+            break;
+
+        default:
+            $from->send(json_encode(['type' => 'error', 'message' => 'Type inconnu']));
+            break;
     }
+    }
+
 
     public function onClose(ConnectionInterface $conn)
     {
         $code   = $conn->code   ?? null;
         $pseudo = $conn->pseudo ?? 'Anonyme';
 
-        if ($code && isset($this->clients[$code])) {
-            $this->clients[$code]->detach($conn);
+        if (!$code || !isset($this->clients[$code])) return;
 
-            echo "Connexion fermée : {$pseudo} sur partie {$code}\n";
+        $this->clients[$code]->detach($conn);
+        echo "Connexion fermée : {$pseudo} sur partie {$code}\n";
 
-            $this->broadcast($code, [
-                'type'   => 'leave',
-                'pseudo' => $pseudo,
-            ]);
+        $this->broadcast($code, [
+            'type'   => 'leave',
+            'pseudo' => $pseudo,
+        ]);
 
-            // pousser la nouvelle liste
-            if (isset($this->clients[$code])) {
-                $this->broadcast($code, [
-                    'type'    => 'players',
-                    'players' => $this->getPlayers($code),
-                ]);
-            }
+        // Pousser la liste à jour
+        $this->broadcast($code, [
+            'type'    => 'players',
+            'players' => $this->getPlayers($code),
+        ]);
 
-            if (count($this->clients[$code]) === 0) {
-                unset($this->clients[$code]);
-            }
+        if (count($this->clients[$code]) === 0) {
+            unset($this->clients[$code]);
         }
     }
 
@@ -148,8 +169,6 @@ class PokerServer implements MessageComponentInterface
         foreach ($this->clients[$code] as $client) {
             $players[] = $client->pseudo ?? 'Anonyme';
         }
-
-        // enlève doublons + réindexe
         return array_values(array_unique($players));
     }
 
@@ -157,7 +176,8 @@ class PokerServer implements MessageComponentInterface
     {
         if (!isset($this->clients[$code])) return;
 
-        $json = json_encode($msg);
+        $json = json_encode($msg, JSON_UNESCAPED_UNICODE);
+
         foreach ($this->clients[$code] as $client) {
             if ($except && $client === $except) continue;
             $client->send($json);

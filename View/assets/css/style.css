@@ -1,104 +1,128 @@
-*{
-  margin: 0;
-  padding: 0;
-  text-decoration: none;
-  list-style-type: none;
+ body { background:#f6f7fb; }
+    .pp-topbar { backdrop-filter: blur(8px); background: rgba(255,255,255,.85); }
+    .pp-shadow { box-shadow: 0 12px 30px rgba(15, 23, 42, .06); }
+    .pp-arena{
+      position:relative;
+      min-height: 560px;
+      border-radius: 28px;
+      background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+      overflow:hidden;
+    }
+    .pp-arena-inner{
+    position: relative;
+    height: 620px;
+    width: 100%;
+    }
+
+.pp-arena{
+  position:relative;
+  min-height: 560px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  overflow:hidden;
+  padding-bottom: 130px; /* ✅ réserve la place de la cardsbar */
 }
 
-main{
-  margin: 20px;
+.pp-center,
+.pp-player{
+  top: 44%; /* ✅ au lieu de 50% */
 }
 
-body {
-        background: #f5f5ff !important;
-    }
+#arenaInner{
+  position: relative;
+  width: 100%;
+}
+    .pp-center{
+      position:absolute; left:50%; top:50%;
+      transform:translate(-50%,-50%);
+      width:min(560px, 88%);
+      background:#eef6ff;
+      border:1px solid #dbeafe;
+      border-radius: 26px;
+      padding: 18px;
+      text-align:center;
+      z-index: 2;
 
-    .pp-card {
-        border-radius: 18px;
-        border: none;
-        box-shadow: 0 10px 30px rgba(32, 32, 72, 0.07);
-        background: #ffffff;
     }
-
-    .pp-column-title {
-        font-weight: 600;
-        font-size: 0.95rem;
-        letter-spacing: .03em;
-        text-transform: uppercase;
-        color: #7b7fb0;
+    .pp-task-title{ font-weight: 800; margin-top: 10px; }
+    .pp-task-desc{ color:#64748b; font-size: 0.9rem; white-space: pre-wrap; margin-top: 6px; }
+    .pp-cardsbar{
+      position:absolute; left:0; right:0; bottom:0;
+      padding: 14px;
+      border-top: 1px solid #e5e7eb;
+      background:#fff;
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+      z-index: 5;
     }
-
-    .pp-player-pill {
-        border-radius: 999px;
-        padding: 0.4rem 0.75rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 0.85rem;
+    .pp-bigcard{
+      width: 64px; height: 74px;
+      border-radius: 14px;
+      border: 2px solid #dbeafe;
+      background: #fff;
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 900; font-size: 18px;
+      cursor:pointer; user-select:none;
+      transition: transform .08s ease, box-shadow .2s ease;
     }
+    .pp-bigcard:hover{ box-shadow: 0 10px 22px rgba(2,6,23,.08); }
+    .pp-bigcard:active{ transform: scale(.98); }
+    .pp-bigcard.selected{ outline: 3px solid rgba(59,130,246,.35); }
+    .pp-bigcard.cafe{ width: 92px; font-size: 16px; }
 
-    .pp-player-pill span.badge {
-        font-size: 0.7rem;
-        text-transform: uppercase;
+    /* players around circle */
+    .pp-player{
+      position:absolute; left:50%; top:50%;
+      transform: translate(-50%,-50%);
+      width: 170px;
+        z-index: 1;
+
+      display:flex; align-items:center; gap:10px;
     }
-
-    .pp-center-header {
-        border-radius: 18px;
-        background: linear-gradient(135deg, #f0ecff, #fdfbff);
-        border: none;
+    .pp-avatar{
+      width: 44px; height: 44px;
+      border-radius: 999px;
+      background: linear-gradient(135deg,#e2e8f0,#f8fafc);
+      border:1px solid #e5e7eb;
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 900;
+      flex: 0 0 auto;
     }
-
-    .pp-mode-tag {
-        padding: 0.25rem 0.6rem;
-        border-radius: 999px;
-        background: #ffffffaa;
-        font-size: 0.75rem;
-        font-weight: 500;
+    .pp-mini{
+      margin-left:auto;
+      width: 44px; height: 60px;
+      border-radius: 10px;
+      border:2px solid #dbeafe;
+      background:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 900;
+      box-shadow: 0 8px 20px rgba(2,6,23,.08);
+      position:relative;
+      transform-style: preserve-3d;
+      transition: transform .35s ease;
     }
-
-    .pp-vote-card {
-        border-radius: 14px;
-        min-width: 3rem;
-        min-height: 4.2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 1.05rem;
-        background: #ffffff;
-        border: 2px solid #e1ddff;
-        transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    .pp-mini .front, .pp-mini .back{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      backface-visibility: hidden;
+      border-radius: 10px;
     }
+    .pp-mini .back{ background: linear-gradient(135deg,#1d4ed8,#60a5fa); color:#fff; }
+    .pp-mini .front{ background:#fff; color:#0f172a; transform: rotateY(180deg); }
+    .pp-mini.flipped{ transform: rotateY(180deg); }
+    .pp-dot{ width:8px; height:8px; border-radius:999px; background:#cbd5e1; display:inline-block; }
+    .pp-dot.voted{ background:#3b82f6; }
 
-    .pp-vote-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(80, 70, 190, 0.15);
-        border-color: #7b5cff;
-    }
+    /* animations */
+    @keyframes pop {0%{transform:translate(-50%,-50%) scale(.98); opacity:.5} 100%{transform:translate(-50%,-50%) scale(1); opacity:1}}
+    @keyframes shake {0%,100%{transform:translate(-50%,-50%) translateX(0)} 25%{transform:translate(-50%,-50%) translateX(-10px)} 75%{transform:translate(-50%,-50%) translateX(10px)}}
+    .pp-center.revealAnim{ animation: pop .25s ease-out; }
+    .pp-center.disagreeAnim{ animation: shake .35s ease-in-out; }
+    .pp-center.successAnim{ box-shadow: 0 0 0 6px rgba(59,130,246,.12), 0 12px 30px rgba(15, 23, 42, .06); }
 
-    .pp-vote-card.pp-selected {
-        border-color: #7b5cff;
-        box-shadow: 0 6px 16px rgba(80, 70, 190, 0.2);
-        background: #f1eeff;
-    }
+    .pp-log{ max-height: 220px; overflow:auto; }
+    .pp-code{ background:#f1f5f9; border-radius: 8px; padding: 2px 6px; }
 
-    .pp-card-coffee {
-        font-size: 1.3rem;
-    }
-
-    .pp-btn-reveal {
-        border-radius: 999px;
-        padding-inline: 1.6rem;
-        font-weight: 500;
-        background: #ff4b6a;
-        border-color: #ff4b6a;
-    }
-
-    .pp-btn-reveal:hover {
-        background: #e63f5c;
-        border-color: #e63f5c;
-    }
-
-    #journal {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    @media (max-width: 992px){
+      .pp-arena{ min-height: 640px; }
+      .pp-arena-inner{ height: 600px; }
     }

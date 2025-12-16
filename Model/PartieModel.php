@@ -1,23 +1,8 @@
 <?php
-
 require_once "Model/ModelMain.php";
 
 class PartieModel extends ModelMain
 {
-    /**
-     * Crée une nouvelle partie en base.
-     *
-     * Table suggérée 'partie' :
-     *  - id (INT, PK, AI)
-     *  - nom (VARCHAR)
-     *  - lien (VARCHAR) : code de la partie
-     *  - nb_joueur (INT)
-     *  - mode (VARCHAR)
-     *  - minuteur (TIME ou VARCHAR)
-     *  - id_createur (INT)
-     *  - createur (VARCHAR)
-     *  - created_at (DATETIME)
-     */
     public function creerPartie(
         string $nom,
         string $code,
@@ -25,45 +10,80 @@ class PartieModel extends ModelMain
         string $mode,
         string $minuteur,
         int $idCreateur,
-        string $createur
+        string $createur,
+        array $backlog = []
     ): int {
-        $sql = "INSERT INTO partie 
-                (nom, lien, nb_joueur, mode, minuteur, id_createur, createur, created_at)
-                VALUES 
-                (:nom, :lien, :nb_joueur, :mode, :minuteur, :id_createur, :createur, NOW())";
+        $sql = "INSERT INTO partie
+            (nom, lien, nb_joueur, mode, minuteur, createur, id_createur, etat, backlog_json, resultats, tache_index, tour, created_at)
+            VALUES
+            (:nom, :lien, :nb_joueur, :mode, :minuteur, :createur, :id_createur, 'running', :backlog_json, :resultats, 0, 1, CURDATE())";
 
         $this->executeReq($sql, [
-            'nom'            => $nom,
-            'lien'           => $code,
-            'nb_joueur'      => $nbJoueur,
-            'mode'           => $mode,
-            'minuteur'       => $minuteur,
-            'id_createur'    => $idCreateur,
-            'createur'=> $createur
+            'nom'         => $nom,
+            'lien'        => $code,
+            'nb_joueur'   => $nbJoueur,
+            'mode'        => $mode,
+            'minuteur'    => $minuteur,
+            'createur'    => $createur,
+            'id_createur' => $idCreateur,
+            'backlog_json'=> json_encode($backlog, JSON_UNESCAPED_UNICODE),
+            'resultats'   => json_encode([], JSON_UNESCAPED_UNICODE),
         ]);
 
         return (int)$this->pdo->lastInsertId();
     }
 
-    /**
-     * Récupère une partie via son code (lien).
-     */
     public function getPartieByCode(string $code): ?array
     {
         $sql  = "SELECT * FROM partie WHERE lien = :lien LIMIT 1";
         $stmt = $this->executeReq($sql, ['lien' => $code]);
-        $res  = $stmt->fetch();
-
-        return $res ?: null;
+        $row  = $stmt->fetch();
+        return $row ?: null;
     }
 
-    /**
-     * (optionnel) Récupérer les parties d'un utilisateur.
-     */
-    public function getPartiesByCreateur(int $idCreateur): array
+    public function updateBacklog(string $code, array $backlog): void
     {
-        $sql  = "SELECT * FROM partie WHERE id_createur = :id ORDER BY created_at DESC";
-        $stmt = $this->executeReq($sql, ['id' => $idCreateur]);
-        return $stmt->fetchAll();
+        $this->executeReq(
+            "UPDATE partie SET backlog_json = :b, tache_index = 0, tour = 1, etat='running' WHERE lien = :lien",
+            ['b' => json_encode($backlog, JSON_UNESCAPED_UNICODE), 'lien' => $code]
+        );
+    }
+
+    public function getBacklog(string $code): array
+    {
+        $p = $this->getPartieByCode($code);
+        if (!$p || empty($p['backlog_json'])) return [];
+        $decoded = json_decode($p['backlog_json'], true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    public function getResultats(string $code): array
+    {
+        $p = $this->getPartieByCode($code);
+        if (!$p || empty($p['resultats'])) return [];
+        $decoded = json_decode($p['resultats'], true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    public function saveResultats(string $code, array $resultats): void
+    {
+        $this->executeReq(
+            "UPDATE partie SET resultats = :r WHERE lien = :lien",
+            ['r' => json_encode($resultats, JSON_UNESCAPED_UNICODE), 'lien' => $code]
+        );
+    }
+
+    public function updateProgress(string $code, int $tacheIndex, int $tour, string $etat = 'running'): void
+    {
+        $this->executeReq(
+            "UPDATE partie SET tache_index = :i, tour = :t, etat = :etat WHERE lien = :lien",
+            ['i' => $tacheIndex, 't' => $tour, 'etat' => $etat, 'lien' => $code]
+        );
+    }
+
+    public function isAnimateur(string $code, int $userId): bool
+    {
+        $p = $this->getPartieByCode($code);
+        return $p && (int)$p['id_createur'] === (int)$userId;
     }
 }
