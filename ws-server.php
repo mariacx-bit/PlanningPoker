@@ -121,6 +121,10 @@ class PokerServer implements MessageComponentInterface
             $from->send(json_encode(['type' => 'pong']));
             break;
 
+        case 'timer_reset':
+            $this->broadcast($code, ['type' => 'timer_reset']);
+            break;
+
         default:
             $from->send(json_encode(['type' => 'error', 'message' => 'Type inconnu']));
             break;
