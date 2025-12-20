@@ -20,8 +20,7 @@ $route = $routes[$page];
  *    (avant d'envoyer le moindre HTML)
  */
 $actionParam = $_GET['action'] ?? null;
-
-if ($page === 'Partie' && in_array($actionParam, ['resolve', 'export', 'saveBacklog', 'setCurrent'], true)) {
+if ($page === 'Partie' && in_array($actionParam, ['resolve','export','saveBacklog','skip','pick'], true)) {
     require_once "Controller/PartieController.php";
     $controller = new PartieController();
     $controller->partie();
