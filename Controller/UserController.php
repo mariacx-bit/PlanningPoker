@@ -44,8 +44,7 @@ class UserController
             $email = $_POST['email'] ?? '';
             $mdp   = $_POST['mdp'] ?? '';
 
-            // Ici, vous devriez vérifier les informations d'identification
-            // contre la base de données. Ceci est un exemple simplifié.
+        
             $sql = "SELECT * FROM user WHERE email = :email";
             $stmt = $this->userModel->executeReq($sql, ['email' => $email]);
             $user = $stmt->fetch();
