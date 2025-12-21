@@ -28,34 +28,78 @@ class PartieController
     ========================= */
 
     private function renderPartie(): void
-    {
-        $code = $_GET['code'] ?? '';
-        if ($code === '') { echo "Code manquant"; return; }
+{
+    $code = $_GET['code'] ?? '';
+    if ($code === '') { echo "Code manquant"; return; }
 
-        $partie = $this->model->getPartieByCode($code);
-        if (!$partie) { echo "Partie introuvable"; return; }
+    $partie = $this->model->getPartieByCode($code);
+    if (!$partie) { echo "Partie introuvable"; return; }
 
-        $pseudo = $_SESSION['pseudo'] ?? 'Anonyme';
-        $isAnimateur = ($pseudo !== '' && ($partie['createur'] ?? '') === $pseudo);
+    /**
+     * ✅ DEMANDE PSEUDO POUR LES EXTERNES
+     * - Si pas de pseudo en session => afficher formulaire JoinPartie
+     * - Quand POST pseudo => stocker en session + redirect vers Partie&code=...
+     */
+    if (!isset($_SESSION['pseudo']) || trim((string)$_SESSION['pseudo']) === '') {
 
-        $mode = $partie['mode'] ?? 'strict';
-        $tour = (int)($partie['tour'] ?? 1);
-        $currentIndex = (int)($partie['tache_index'] ?? 0);
+        // Soumission du pseudo
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pseudo'])) {
+            $p = trim((string)$_POST['pseudo']);
 
-        $tasks = $this->decodeBacklog($partie['backlog_json'] ?? '');
+            // validation simple
+            if ($p === '') {
+                $errorPseudo = "Pseudo obligatoire.";
+                require "View/Navigation/JoinPartie.php";
+                return;
+            }
+            if (mb_strlen($p) < 2) {
+                $errorPseudo = "Pseudo trop court (min 2 caractères).";
+                require "View/Navigation/JoinPartie.php";
+                return;
+            }
+            if (mb_strlen($p) > 20) {
+                $errorPseudo = "Pseudo trop long (max 20 caractères).";
+                require "View/Navigation/JoinPartie.php";
+                return;
+            }
 
-        if ($currentIndex < 0) $currentIndex = 0;
-        if ($currentIndex >= count($tasks)) $currentIndex = 0;
+            $_SESSION['pseudo'] = $p;
 
-        $tacheCourante = $tasks[$currentIndex] ?? null;
+            header("Location: Index.php?page=Partie&code=" . urlencode($code));
+            exit;
+        }
 
-        $minuteurStr = (string)($partie['minuteur'] ?? '00:02:00');
-        $minuteurSeconds = $this->timeToSeconds($minuteurStr);
-
-        $codePartie = $code; // variable pour la vue
-
-        require "View/Navigation/Partie.php";
+        // Affichage formulaire
+        $errorPseudo = null;
+        require "View/Navigation/JoinPartie.php";
+        return;
     }
+
+    // ✅ à partir d'ici : pseudo OK
+    $pseudo = (string)($_SESSION['pseudo'] ?? 'Anonyme');
+
+    // Attention : animateur = createur en BDD (pseudo)
+    $isAnimateur = ($pseudo !== '' && ($partie['createur'] ?? '') === $pseudo);
+
+    $mode = $partie['mode'] ?? 'strict';
+    $tour = (int)($partie['tour'] ?? 1);
+    $currentIndex = (int)($partie['tache_index'] ?? 0);
+
+    $tasks = $this->decodeBacklog($partie['backlog_json'] ?? '');
+
+    if ($currentIndex < 0) $currentIndex = 0;
+    if (count($tasks) > 0 && $currentIndex >= count($tasks)) $currentIndex = 0;
+
+    $tacheCourante = $tasks[$currentIndex] ?? null;
+
+    $minuteurStr = (string)($partie['minuteur'] ?? '00:02:00');
+    $minuteurSeconds = $this->timeToSeconds($minuteurStr);
+
+    $codePartie = $code; // variable pour la vue
+
+    require "View/Navigation/Partie.php";
+}
+
 
     /* =========================
         JSON helpers
