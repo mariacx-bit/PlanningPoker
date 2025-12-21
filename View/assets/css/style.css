@@ -1,10 +1,299 @@
-*{
-  margin: 0;
-  padding: 0;
-  text-decoration: none;
-  list-style-type: none;
-}
+body { background:#f6f7fb; }
 
-main{
-  margin: 20px;
-}
+    .pp-appbar{
+      height: 64px;
+      background:#fff;
+      border-bottom:1px solid #e5e7eb;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 0 16px;
+      position: sticky;
+      top:0;
+      z-index: 50;
+    }
+    .pp-brand{ font-weight:900; font-size: 20px; }
+
+    .pp-chip{
+      border:1px solid #e5e7eb;
+      background:#fff;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-weight: 800;
+      font-size: 13px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      white-space: nowrap;
+    }
+    .pp-chip.dark{ background:#111827; color:#fff; border-color:#111827; }
+    .pp-chip.primary{ background:#2563eb; color:#fff; border-color:#2563eb; }
+
+    .pp-layout{
+      display:grid;
+      grid-template-columns: 1fr 380px;
+      gap: 16px;
+      padding: 16px;
+    }
+    @media (max-width: 992px){ .pp-layout{ grid-template-columns: 1fr; } }
+
+    .pp-arena{
+      background:#fff;
+      border-radius: 20px;
+      border:1px solid #eef2f7;
+      min-height: calc(100vh - 64px - 32px);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    .pp-arena-stage{
+      flex: 1 1 auto;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 28px 18px;
+      background: #f7faff;
+    }
+
+    .pp-playerRow{
+      position:absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(560px, 92%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 26px;
+      pointer-events:none;
+    }
+    .pp-playerRow.top{ top: 42px; }
+    .pp-playerRow.bottom{ bottom: 42px; }
+
+    .pp-player{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 10px;
+      min-width: 120px;
+      pointer-events:auto;
+    }
+    .pp-name{
+      font-weight: 900;
+      color:#111827;
+      text-align:center;
+      max-width: 180px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .pp-statusLine{
+      font-size: 13px;
+      color:#64748b;
+      font-weight: 700;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .pp-voteDot{
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      background:#cbd5e1;
+      display:inline-block;
+    }
+    .pp-voteDot.voted{ background:#2563eb; }
+
+    .pp-cardSmall{
+      width: 56px;
+      height: 78px;
+      border-radius: 14px;
+      border:2px solid #bfdbfe;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 900;
+      font-size: 18px;
+      box-shadow: 0 10px 24px rgba(2,6,23,.08);
+      position:relative;
+      transform-style: preserve-3d;
+      transition: transform .35s ease;
+    }
+    .pp-cardSmall .front, .pp-cardSmall .back{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      backface-visibility:hidden;
+      border-radius: 14px;
+    }
+    .pp-cardSmall .back{
+      background: linear-gradient(135deg,#1d4ed8,#60a5fa);
+      color:#fff;
+      font-size: 20px;
+    }
+    .pp-cardSmall .front{
+      background:#fff;
+      color:#111827;
+      transform: rotateY(180deg);
+      font-size: 18px;
+    }
+    .pp-cardSmall.flipped{ transform: rotateY(180deg); }
+
+    .pp-centerBubble{
+      width: min(560px, 92%);
+      background:#dbeafe;
+      border-radius: 18px;
+      padding: 34px 18px;
+      text-align:center;
+      border: 1px solid #bfdbfe;
+      box-shadow: 0 12px 30px rgba(2,6,23,.06);
+      position: relative;
+    }
+    .pp-centerBubble h4{ margin:0; font-weight: 900; color:#111827; }
+    .pp-centerBubble .smalltext{
+      margin-top: 10px;
+      color:#334155;
+      font-weight: 700;
+      white-space: pre-line;
+    }
+    .pp-currentIssue{ margin-top: 18px; color:#111827; font-weight: 900; font-size: 18px; }
+    .pp-currentDesc{ margin-top: 10px; color:#334155; font-weight: 600; white-space: pre-wrap; }
+
+    .pp-centerActions{
+      display:flex;
+      justify-content:center;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap:wrap;
+    }
+    .pp-btn{
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 900;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      cursor:pointer;
+    }
+    .pp-btn.primary{
+      background:#2563eb;
+      color:#fff;
+      border-color:#2563eb;
+    }
+    .pp-btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+    .pp-deck{
+      border-top: 1px solid #e5e7eb;
+      background:#fff;
+      padding: 14px 12px;
+      display:flex;
+      justify-content:center;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+    .pp-cardPick{
+      width: 58px; height: 86px;
+      border-radius: 12px;
+      border:2px solid #93c5fd;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 900;
+      font-size: 18px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .08s ease, box-shadow .2s ease;
+    }
+    .pp-cardPick:hover{ box-shadow: 0 10px 22px rgba(2,6,23,.08); }
+    .pp-cardPick:active{ transform: scale(.98); }
+    .pp-cardPick.selected{ outline: 4px solid rgba(37,99,235,.25); }
+    .pp-cardPick.disabled{ pointer-events:none; opacity:.5; }
+    .pp-cardPick.cafe{ font-size: 22px; }
+
+    .pp-side{
+      background:#fff;
+      border-radius: 20px;
+      border:1px solid #eef2f7;
+      overflow:hidden;
+      min-height: calc(100vh - 64px - 32px);
+      display:flex;
+      flex-direction:column;
+    }
+    .pp-sideHeader{ padding: 14px 14px 10px 14px; border-bottom:1px solid #eef2f7; }
+    .pp-sideHeader .title{ font-weight: 900; font-size: 16px; }
+
+    .pp-issues{ padding: 12px; overflow:auto; flex: 1 1 auto; }
+    .pp-issueCard{
+      border:1px solid #eef2f7;
+      border-radius: 14px;
+      padding: 12px;
+      background:#fff;
+      margin-bottom: 10px;
+    }
+    .pp-issueCard.active{ background:#dbeafe; border-color:#bfdbfe; }
+    .pp-issueCard.validated{ background:#ecfdf5; border-color:#a7f3d0; }
+
+    .pp-issueId{ font-weight: 900; color:#111827; font-size: 13px; }
+    .pp-issueTitle{ font-weight: 900; margin-top: 4px; }
+    .pp-issueDesc{ margin-top: 6px; color:#64748b; font-weight:600; font-size: 13px; }
+
+    .pp-issueActions{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top: 10px;
+      gap: 10px;
+    }
+    .pp-issueBtn{
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-weight: 900;
+      border:1px solid #e5e7eb;
+      background:#f9fafb;
+      cursor:pointer;
+      white-space: nowrap;
+    }
+    .pp-issueBtn.primary{ background:#2563eb; color:#fff; border-color:#2563eb; }
+    .pp-issueBtn:disabled{ opacity:.65; cursor:not-allowed; }
+
+    .pp-eye{
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      border:1px solid #e5e7eb;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+      background:#fff;
+      user-select:none;
+    }
+    .pp-estimateBox{
+      min-width: 44px;
+      height: 34px;
+      border-radius: 10px;
+      border:1px solid #e5e7eb;
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 900;
+      background:#fff;
+    }
+
+    .pp-journal{
+      padding: 10px 14px;
+      border-top:1px solid #eef2f7;
+      background:#fff;
+      font-size: 13px;
+      color:#334155;
+    }
+    .pp-journal .log{ max-height: 120px; overflow:auto; margin-top: 8px; }
+    .pp-code{ background:#f1f5f9; border-radius: 8px; padding: 2px 6px; font-weight: 900; }
+
+    /* Coffee pause */
+    .pp-centerBubble.coffee{
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-color: #f59e0b;
+    }
+
+    /* Animations */
+    @keyframes pop { 0%{transform:scale(.98);opacity:.6} 100%{transform:scale(1);opacity:1} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+    .pp-pop{ animation: pop .2s ease-out; }
+    .pp-shake{ animation: shake .35s ease-in-out; }

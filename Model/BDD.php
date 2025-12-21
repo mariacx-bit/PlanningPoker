@@ -30,10 +30,6 @@ abstract class BDD
     {
         $stmt = $this->pdo->prepare($query);
 
-        foreach($data as $cle => $valeur){
-            $data[$cle] = htmlentities($valeur);
-        }
-
         $stmt->execute($data);
 
         return $stmt;

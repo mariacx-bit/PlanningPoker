@@ -1,20 +1,57 @@
-<h1>Connexion</h1>
-<?php if (!empty($error)): ?>
-    <p style="color: red;"><?php echo $error; ?></p>
-<?php endif; ?>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
 
-<form action="Index.php?page=Connexion" method="POST">
-    <label for="email">email :</label>
-    <input type="text" name="email" id="email" required>
-    <br>
+            <div class="card shadow">
+                <div class="card-body">
 
-    <label for="mdp">Mot de passe :</label>
-    <input type="password" name="mdp" id="mdp" required>
-    <br>
+                    <h3 class="text-center mb-4">Connexion</h3>
 
-    <button type="submit">Se connecter</button>
+                    <?php if (!empty($error)): ?>
+                        <div class="alert alert-danger text-center">
+                            <?= htmlspecialchars($error) ?>
+                        </div>
+                    <?php endif; ?>
 
-    <p>Pas encore de compte ? <a href="Index.php?page=Inscription">Inscrivez-vous ici</a>.</p>
+                    <form action="Index.php?page=Connexion" method="POST">
 
-</form>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input
+                                type="email"
+                                class="form-control"
+                                name="email"
+                                id="email"
+                                required
+                                autofocus
+                            >
+                        </div>
 
+                        <div class="mb-3">
+                            <label for="mdp" class="form-label">Mot de passe</label>
+                            <input
+                                type="password"
+                                class="form-control"
+                                name="mdp"
+                                id="mdp"
+                                required
+                            >
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            Se connecter
+                        </button>
+
+                        <p class="text-center mt-3 mb-0">
+                            Pas encore de compte ?
+                            <a href="Index.php?page=Inscription">S'inscrire</a>
+                        </p>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
