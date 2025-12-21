@@ -83,4 +83,15 @@ $routes = array(
         'visible'    => true,
         'active'     => true
     ],
+
+    'CreatePartie' => [
+        'nom'        => 'CreatePartie',
+        'header'     => 'HeaderUser',
+        'controleur' => 'PartieController',
+        'model'      => 'PartieModel',
+        'vue'        => 'Navigation/CreatePartie',
+        'active'     => true,
+        'visible'    => true
+    ],
+
 );

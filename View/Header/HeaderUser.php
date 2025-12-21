@@ -22,7 +22,7 @@ $pseudo = $_SESSION['pseudo'] ?? "Utilisateur";
                 </li>
 
                 <li class="nav-item me-3">
-                    <a class="btn btn-outline-primary" href="Index.php?page=Partie">
+                    <a class="btn btn-outline-primary" href="Index.php?page=CreatePartie">
                         + Nouvelle partie
                     </a>
                 </li>

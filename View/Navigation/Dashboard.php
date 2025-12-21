@@ -6,7 +6,7 @@
     ?>
     <h2 class="fw-bold">Bienvenue, <?= htmlspecialchars($pseudo) ?> 👋</h2>
 
-        <a href="Index.php?page=Partie" class="btn btn-primary btn-lg shadow-sm">
+        <a href="Index.php?page=CreatePartie" class="btn btn-primary btn-lg shadow-sm">
             + Créer une nouvelle partie
         </a>
     </div>

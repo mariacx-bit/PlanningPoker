@@ -81,6 +81,35 @@ class PartieController
         return $pseudo !== '' && ($partie['createur'] ?? '') === $pseudo;
     }
 
+    public function createpartie()
+    {
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: Index.php?page=Connexion");
+            exit;
+        }
+
+        // si POST => créer en base puis redirect vers Partie avec ?code=
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $nom = trim($_POST['nom'] ?? 'Ma partie');
+            $mode = $_POST['mode'] ?? 'strict';
+            $nb = (int)($_POST['nb_joueur'] ?? 2);
+            $minuteur = $_POST['minuteur'] ?? '00:02:00';
+
+            $code = strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
+            $pseudo = $_SESSION['pseudo'] ?? 'Anonyme'; // adapte à ton projet
+            $idCreateur = (int)$_SESSION['user_id'];
+
+            $this->model->creerPartie($nom, $code, $nb, $mode, $minuteur, $idCreateur, $pseudo);
+
+            header("Location: Index.php?page=Partie&code=" . urlencode($code));
+            exit;
+        }
+
+        // sinon => afficher le formulaire
+        require "View/Navigation/CreatePartie.php";
+    }
+
+
     /* =========================
         IMPORTANT: decode backlog
         (ton BDD->executeReq() fait htmlentities)
