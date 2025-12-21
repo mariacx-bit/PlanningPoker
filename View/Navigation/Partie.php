@@ -374,6 +374,7 @@ $totalIssues = count($tasks);
       <div class="pp-centerBubble" id="centerBubble">
         <h4 id="centerTitle">Pick your cards!</h4>
         <div class="smalltext" id="centerSubtitle">Waiting for player's votes…</div>
+        <div id="centerAlert" class="alert py-2 px-3 mt-3 d-none" role="alert" style="text-align:left; font-weight:800;"></div>
 
         <div class="pp-currentIssue" id="centerIssue">
           <?php if ($tacheCourante): ?>
@@ -522,6 +523,14 @@ $totalIssues = count($tasks);
   </div>
 
 </div>
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:2000">
+  <div id="ppToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="ppToastBody">...</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -554,12 +563,49 @@ $totalIssues = count($tasks);
   const btnAddTask   = document.getElementById('btnAddTask');
   const addTaskStatus= document.getElementById('addTaskStatus');
 
+  const DELAY_DISAGREE_MS = 3500;   // ⏳ 3,5 secondes pour lire le message
+  const DELAY_VALIDATE_MS = 2200;   // validation un peu plus rapide
+  const DELAY_COFFEE_MS   = 2500;
+
   const players = [];
   const voted = {};
   const votes = {};
   let revealed = false;
   let resolving = false;
   let coffeePaused = false;
+  const centerAlert = document.getElementById("centerAlert");
+
+function showCenterAlert(type, html){
+  // type: 'success' | 'warning' | 'danger' | 'info'
+  if (!centerAlert) return;
+
+  centerAlert.className = "alert py-2 px-3 mt-3";
+  centerAlert.classList.add("alert-" + type);
+  centerAlert.innerHTML = html;
+  centerAlert.classList.remove("d-none");
+}
+
+function hideCenterAlert(){
+  if (!centerAlert) return;
+  centerAlert.classList.add("d-none");
+  centerAlert.innerHTML = "";
+}
+
+function showToast(type, text){
+  // type: 'primary' | 'success' | 'warning' | 'danger' | 'info'
+  const t = document.getElementById("ppToast");
+  const b = document.getElementById("ppToastBody");
+  if (!t || !b || typeof bootstrap === "undefined") return;
+
+  // reset classes
+  t.className = "toast align-items-center border-0";
+  t.classList.add("text-bg-" + type);
+  b.textContent = text;
+
+  const toast = bootstrap.Toast.getOrCreateInstance(t, { delay: 2500 });
+  toast.show();
+}
+
 
   function log(msg){
     const div = document.createElement('div');
@@ -675,6 +721,9 @@ $totalIssues = count($tasks);
       : "Tout le monde a voté café.\nEn attente de l'animateur pour reprendre…";
 
     setDeckEnabled(false);
+    showCenterAlert('warning', "☕ <b>Pause café</b> : tout le monde a voté café.");
+    showToast('warning', "Pause café");
+
 
     if (btnResolve) { btnResolve.disabled = true; btnResolve.textContent = "Pause ☕"; }
     if (btnNewRound) btnNewRound.disabled = true;
@@ -705,6 +754,7 @@ $totalIssues = count($tasks);
   }
 
   function resetRoundLocal(withLog=true){
+    hideCenterAlert();
     revealed = false;
     resolving = false;
 
@@ -736,7 +786,7 @@ $totalIssues = count($tasks);
     }
 
     if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:'reveal'}));
-    await new Promise(r => setTimeout(r, 250));
+    await new Promise(r => setTimeout(r, DELAY_DISAGREE_MS));
 
     const res = await fetch("Index.php?page=Partie&action=resolve&code=" + encodeURIComponent(codePartie), {
       method:"POST",
@@ -764,18 +814,34 @@ $totalIssues = count($tasks);
 
     if (data.status === 'validated'){
       centerSubtitle.textContent = "✅ Validated";
+      showCenterAlert('success', "✅ <b>Validé</b> : estimation retenue = <span class='badge bg-success'>" + esc(data.estimate ?? '—') + "</span>");
+      showToast('success', "Tâche validée (" + (data.estimate ?? '—') + ")");
       log("✅ Validé — estimation: <b>" + esc(data.estimate ?? '—') + "</b>");
+
       if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:'refresh'}));
-      setTimeout(() => location.reload(), 200);
+      setTimeout(() => location.reload(), 2000);
       return;
     }
 
-    if (data.status === 'continue'){
+   if (data.status === 'continue'){
       centerSubtitle.textContent = "Pas d’accord — nouveau tour…";
+      showCenterAlert('danger', "❌ <b>Désaccord</b> : l’équipe n’est pas alignée.<br>➡️ Discussion puis nouveau vote.");
+      showToast('danger', "Désaccord — nouveau tour");
       log("❌ Pas d’accord — on revote.");
+
+      centerBubble.classList.add('pp-shake');
+      setTimeout(() => centerBubble.classList.remove('pp-shake'), 380);
+
+      // ✅ plus long pour laisser lire
+      const DELAY_DISAGREE_MS = 3500;
+
       if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:'round_reset'}));
-      setTimeout(() => resetRoundLocal(false), 180);
-      resolving = false;
+
+      setTimeout(() => {
+        resetRoundLocal(false);
+        resolving = false;   // ✅ on libère à la fin
+      }, DELAY_DISAGREE_MS);
+
       return;
     }
 
