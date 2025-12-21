@@ -10,14 +10,14 @@ class GameRules
      * @return array [
      *    'type'      => 'continue' | 'validated' | 'pause',
      *    'estimate'  => float|null,
-     *    'reason'    => string (pour debug/logs)
+     *    'reason'    => string
      * ]
      */
     public static function decide(string $mode, array $votes, int $round): array
     {
-        // Normalisation
+        // Normalisation (string + trim)
         $cleanVotes = array_map(function ($v) {
-            return strtoupper(trim((string)$v));
+            return trim((string)$v);
         }, $votes);
 
         $nbPlayers = count($cleanVotes);
@@ -30,10 +30,44 @@ class GameRules
             ];
         }
 
+        // ---- Helpers -------------------------------------------------------
+        $isCoffee = function (string $v): bool {
+            $v = trim($v);
+
+            // emoji café
+            if ($v === '☕') return true;
+
+            // Normalise en uppercase
+            $u = mb_strtoupper($v, 'UTF-8');
+
+            // Enlever l'accent de CAFÉ -> CAFE (si possible)
+            // (sans dépendance intl)
+            $ascii = strtr($u, [
+                'É' => 'E', 'È' => 'E', 'Ê' => 'E', 'Ë' => 'E',
+                'À' => 'A', 'Â' => 'A', 'Ä' => 'A',
+                'Î' => 'I', 'Ï' => 'I',
+                'Ô' => 'O', 'Ö' => 'O',
+                'Ù' => 'U', 'Û' => 'U', 'Ü' => 'U',
+                'Ç' => 'C',
+            ]);
+
+            return in_array($ascii, ['CAFE', 'COFFEE'], true);
+        };
+
+        $toNumeric = function (string $v): ?float {
+            $v = trim($v);
+            if ($v === '') return null;
+
+            // accepte virgule française
+            $v = str_replace(',', '.', $v);
+            return is_numeric($v) ? (float)$v : null;
+        };
+        // -------------------------------------------------------------------
+
         // 1) Cas spécial : tout le monde joue café
         $allCoffee = true;
         foreach ($cleanVotes as $v) {
-            if ($v !== 'CAFÉ' && $v !== 'CAFE') {
+            if (!$isCoffee($v)) {
                 $allCoffee = false;
                 break;
             }
@@ -50,14 +84,11 @@ class GameRules
         // Ne garder que les votes numériques
         $numericVotes = [];
         foreach ($cleanVotes as $v) {
-            // on accepte "1", "2", "3", "5", etc.
-            if (is_numeric($v)) {
-                $numericVotes[] = (float)$v;
-            }
+            $n = $toNumeric($v);
+            if ($n !== null) $numericVotes[] = $n;
         }
 
         if (count($numericVotes) === 0) {
-            // Personne n'a donné de valeur exploitable (mélange bizarre de cafés/autre)
             return [
                 'type'     => 'continue',
                 'estimate' => null,
@@ -84,7 +115,6 @@ class GameRules
                 ];
             }
 
-            // Pas d’unanimité → discussion, on recommence
             return [
                 'type'     => 'continue',
                 'estimate' => null,
@@ -94,7 +124,6 @@ class GameRules
 
         // 3) Tours suivants : dépend du mode choisi
         if ($mode === 'strict') {
-            // Toujours unanimité
             $first = $numericVotes[0];
             $unanimous = true;
             foreach ($numericVotes as $v) {
@@ -120,25 +149,17 @@ class GameRules
         }
 
         if ($mode === 'moyenne') {
-            // Moyenne des votes numériques
             $sum = 0.0;
-            foreach ($numericVotes as $v) {
-                $sum += $v;
-            }
+            foreach ($numericVotes as $v) $sum += $v;
             $avg = $sum / count($numericVotes);
-
-            // tu peux arrondir si tu veux coller à une échelle (ex. Fibonacci)
-            // ici on met 2 décimales
-            $avg = round($avg, 2);
 
             return [
                 'type'     => 'validated',
-                'estimate' => $avg,
+                'estimate' => round($avg, 2),
                 'reason'   => 'Validation par moyenne'
             ];
         }
 
-        // Cas par défaut : on ne connaît pas le mode → on continue
         return [
             'type'     => 'continue',
             'estimate' => null,
