@@ -1,0 +1,9 @@
+<map id="BDD" name="BDD">
+<area shape="rect" id="Node000001" title=" " alt="" coords="81,5,132,31"/>
+<area shape="rect" id="Node000002" href="$class_model_main.html" title=" " alt="" coords="64,79,149,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,44,109,79,104,78,105,49"/>
+<area shape="rect" id="Node000003" href="$class_partie_model.html" title=" " alt="" coords="5,153,96,178"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="90,116,62,154,58,150,85,117"/>
+<area shape="rect" id="Node000004" href="$class_user_model.html" title=" " alt="" coords="120,153,205,178"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="126,114,156,152,150,152,124,119"/>
+</map>

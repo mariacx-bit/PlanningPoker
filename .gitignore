@@ -1,0 +1,17 @@
+# === Dependencies ===
+/vendor/
+
+# === Cache / logs ===
+.phpdoc/
+/docs/api/
+*.log
+
+# === OS / IDE ===
+.DS_Store
+.idea/
+.vscode/
+
+# === PHPUnit ===
+.phpunit.cache/
+Tests/_output/
+tests/_output/

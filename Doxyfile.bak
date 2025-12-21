@@ -1,0 +1,24 @@
+PROJECT_NAME           = "Planning Poker"
+PROJECT_BRIEF          = "Documentation automatique du projet Planning Poker"
+OUTPUT_DIRECTORY       = docs
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+
+INPUT                  = Controller Model Entities
+FILE_PATTERNS          = *.php
+RECURSIVE              = YES
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE         = NO
+EXTRACT_STATIC          = YES
+
+QUIET                  = NO
+WARN_IF_UNDOCUMENTED   = NO
+
+HAVE_DOT               = YES
+DOT_IMAGE_FORMAT       = svg
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+CLASS_DIAGRAMS         = YES
+
+EXCLUDE                = vendor Tests tests docs
