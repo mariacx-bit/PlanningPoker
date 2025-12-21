@@ -1,15 +1,24 @@
 <?php return array(
     'root' => array(
-        'name' => 'nounette/planning-poker',
+        'name' => '__root__',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '3e9e9fde48e1f62a50d559676e38da9f1d865bff',
-        'type' => 'project',
+        'reference' => '9ec08a1495bf816b4b1945a7c4eaba8b4b29cf28',
+        'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
         'dev' => true,
     ),
     'versions' => array(
+        '__root__' => array(
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '9ec08a1495bf816b4b1945a7c4eaba8b4b29cf28',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'cboden/ratchet' => array(
             'pretty_version' => 'v0.4.4',
             'version' => '0.4.4.0',
@@ -54,15 +63,6 @@
             'install_path' => __DIR__ . '/../nikic/php-parser',
             'aliases' => array(),
             'dev_requirement' => true,
-        ),
-        'nounette/planning-poker' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
-            'reference' => '3e9e9fde48e1f62a50d559676e38da9f1d865bff',
-            'type' => 'project',
-            'install_path' => __DIR__ . '/../../',
-            'aliases' => array(),
-            'dev_requirement' => false,
         ),
         'phar-io/manifest' => array(
             'pretty_version' => '2.0.4',
